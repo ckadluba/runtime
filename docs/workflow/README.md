@@ -14,7 +14,7 @@ The repo can be built for the following platforms, using the provided setup and 
 
 The runtime repo can be built from a regular, non-admin command prompt. The repository currently consists of three different partitions: the runtime (coreclr), libraries and the installer. For every partition there's a helper script available in the root (e.g. libraries.cmd/sh). The root build script (build.cmd/sh) should be used to build the entire repository.
 
-For information about the different options available, suplly the argument `-help|-h` when invoking the build script:
+For information about the different options available, suply the argument `-help|-h` when invoking the build script:
 ```
 libraries -h
 ```
