@@ -72,6 +72,9 @@ namespace System.Configuration
             return stream;
         }
 
+        //<section name = 'system.runtime.remoting' type='System.Configuration.IgnoreSection, System.Configuration.ConfigurationManager' allowLocation='false' />
+        //<section name = 'windows' type='System.Configuration.IgnoreSection, System.Configuration.Configuration.ConfigurationManager' allowLocation='false' />
+
         private const string ImplicitMachineConfig =
 @"<configuration>
     <configSections>

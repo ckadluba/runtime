@@ -4,6 +4,7 @@
 
 using System.Configuration;
 using System.IO;
+using System.Threading;
 using Xunit;
 
 namespace System.ConfigurationTests
@@ -51,6 +52,18 @@ namespace System.ConfigurationTests
                 Func<string, string> transformer = s => s;
                 config.AssemblyStringTransformer = transformer;
                 Assert.Same(transformer, config.AssemblyStringTransformer);
+            }
+        }
+
+        [Fact]
+        public void GetSectionReturnsRemotingSettings()
+        {
+            Thread.Sleep(60000);
+            using (var temp = new TempConfig(TestData.SystemRuntimeRemotingConfig))
+            {
+                ConfigurationManager.OpenExeConfiguration(temp.ExePath);
+                var appSettings = ConfigurationManager.AppSettings;
+                Assert.NotNull(appSettings);
             }
         }
     }

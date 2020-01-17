@@ -1,0 +1,86 @@
+Analyse https://github.com/dotnet/runtime issue #930
+
+TestConfigManager sample (attached in issue)
+
+* Exception occurrs when accessing ConfigManager.AppSettings
+* Debugging:
+	-  	-> s_initState == Started
+
+		>	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.PrepareConfigSystem() Line 141	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.GetSection(string sectionName) Line 153	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.AppSettings.get() Line 38	C#
+
+	 	-> Not reproducible
+
+
+	-	host.ConfigPaths == "Cannot evaluate expression because the code of the current method is optimized."
+
+	 	>	System.Configuration.ConfigurationManager.dll!System.Configuration.Internal.ConfigSystem.System.Configuration.Internal.IConfigSystem.Init(System.Type typeConfigHost, object[] hostInitParams) Line 20	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ClientConfigurationSystem.ClientConfigurationSystem() Line 30	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.EnsureConfigurationSystem() Line 110	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.PrepareConfigSystem() Line 150	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.GetSection(string sectionName) Line 161	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.AppSettings.get() Line 44	C#
+
+	 	- Also on 3 other Properties in host
+	 		HostLocalConfig, HasRoamingConfig, IsAppConfigHttp
+
+	- Runtime code difference TestConfigManager vs unit test in github clone
+		- ImplicitMachineConfigHost.cs:30
+        public override void Init(IInternalConfigRoot configRoot, params object[] hostInitParams)
+        {
+            // Stash the filemap so we can see if the machine config was explicitly specified
+            _fileMap = (ConfigurationFileMap)hostInitParams[0];
+            base.Init(configRoot, hostInitParams);
+        }
+
+        - Outcome is the same _fileMap == null
+
+     	- Different source code versions:
+     	  GetSectionReturnsRemotingSettings unit test: latest commit 9548bea38a6cf98d072b6771d5c424aea06ac6fc, Mar 2, 2019
+     	  TestConfigManager sample app:                       commit 8756dddd172d3eac44347fd83785fdbfd201d418, Jun 29, 2018
+
+     	- Reason: TestConfigManager.csproj had a PackageReference to .Net Framework 4.7 System.Configuration.ConfigurationManager.
+     	  Removed it and continue debugging. 
+
+
+My unit test GetSectionReturnsRemotingSettings() in ConfigurationTests.cs
+
+* No exception when accessing ConfigManager.AppSettings
+* Debugging:
+	-  	-> s_initState == NotStarted
+
+		>	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.PrepareConfigSystem() Line 147	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.GetSection(string sectionName) Line 161	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.AppSettings.get() Line 44	C#
+
+	 	-> Not reproducible
+
+
+	-	host.ConfigPaths == {System.Configuration.ClientConfigPaths}
+
+		>	System.Configuration.ConfigurationManager.dll!System.Configuration.Internal.ConfigSystem.System.Configuration.Internal.IConfigSystem.Init(System.Type typeConfigHost, object[] hostInitParams) Line 20	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ClientConfigurationSystem.ClientConfigurationSystem() Line 28	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.EnsureConfigurationSystem() Line 104	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.PrepareConfigSystem() Line 141	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.GetSection(string sectionName) Line 153	C#
+	 	System.Configuration.ConfigurationManager.dll!System.Configuration.ConfigurationManager.AppSettings.get() Line 38	C#
+
+	- Runtime code difference TestConfigManager vs unit test in github clone
+		- ImplicitMachineConfigHost.cs:30 
+        public override void Init(IInternalConfigRoot configRoot, params object[] hostInitParams)
+        {
+            // Stash the filemap so we can see if the machine config was explicitly specified
+            GetFileMap(hostInitParams);
+            base.Init(configRoot, hostInitParams);
+        }
+
+        - Outcome is the same _fileMap == null
+
+     	- Different source code versions:
+     	  GetSectionReturnsRemotingSettings unit test: latest commit 9548bea38a6cf98d072b6771d5c424aea06ac6fc, Mar 2, 2019
+     	  TestConfigManager sample app:                       commit 8756dddd172d3eac44347fd83785fdbfd201d418, Jun 29, 2018
+
+     	- Reason: TestConfigManager.csproj had a PackageReference to .Net Framework 4.7 System.Configuration.ConfigurationManager.
+     	  Removed it and continue debugging. 
+

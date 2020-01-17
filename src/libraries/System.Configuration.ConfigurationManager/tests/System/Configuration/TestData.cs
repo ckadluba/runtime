@@ -26,5 +26,17 @@ namespace System.ConfigurationTests
     <add key='BarKey' value='BarValue' />
   </appSettings>
 </configuration>";
+
+        public static string SystemRuntimeRemotingConfig =
+@"<?xml version='1.0' encoding='utf-8' ?>
+<configuration>
+  <system.runtime.remoting>
+    <application>
+      <channels>
+        <channel ref='tcp' port='1111' />
+      </channels>
+    </application>
+  </system.runtime.remoting>
+</configuration>";
     }
 }
